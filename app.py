@@ -29,7 +29,7 @@ def init():
 
 init()
 
-# HOME 🔥 VISUAL TOP
+# HOME 🔥
 @app.route("/")
 def home():
     return """
@@ -47,40 +47,38 @@ def home():
     }
 
     .hero {
-        height:90vh;
+        height:100vh;
         background:
         linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.9)),
-        url('https://images.unsplash.com/photo-1599351431202-1e0f0137899a') center/cover;
+        url('https://images.unsplash.com/photo-1585747860715-2ba37e788b70') center/cover no-repeat;
         display:flex;
         flex-direction:column;
         justify-content:center;
         align-items:center;
         text-align:center;
+        padding:20px;
     }
 
     .hero h1 {
-        font-size:42px;
+        font-size:36px;
         color:gold;
-        text-shadow:2px 2px 15px black;
+        text-shadow:2px 2px 20px black;
     }
 
     .hero p {
-        font-size:18px;
-        margin-bottom:20px;
+        font-size:16px;
+        margin:10px 0 20px;
+        color:#ddd;
     }
 
     .btn {
         background:gold;
-        padding:15px 25px;
-        border-radius:10px;
+        padding:15px 30px;
+        border-radius:12px;
         text-decoration:none;
         color:black;
         font-weight:bold;
-        transition:0.3s;
-    }
-
-    .btn:hover {
-        background:#e6c200;
+        box-shadow:0 0 20px rgba(255,215,0,0.5);
     }
 
     .container {
@@ -106,12 +104,6 @@ def home():
         padding:25px;
         border-radius:15px;
         text-align:center;
-        transition:0.3s;
-    }
-
-    .card:hover {
-        transform:scale(1.05);
-        background:#262626;
     }
 
     .card h3 {
@@ -137,11 +129,6 @@ def home():
         border-radius:10px;
         font-weight:bold;
         cursor:pointer;
-        transition:0.3s;
-    }
-
-    button:hover {
-        background:#e6c200;
     }
 
     a {
@@ -157,7 +144,7 @@ def home():
 
     <div class="hero">
         <h1>💈 Barbearia Paulista</h1>
-        <p>Estilo, qualidade e experiência premium</p>
+        <p>Estilo e experiência premium</p>
         <a href="#agendar" class="btn">Agendar Agora</a>
     </div>
 
@@ -181,7 +168,7 @@ def home():
     </div>
 
     <div class="section" id="agendar">
-        <h2 style="text-align:center;color:gold;">Agendar Horário</h2>
+        <h2 style="text-align:center;color:gold;">Agendar</h2>
 
         <form action="/agendar" method="POST">
             <input name="nome" placeholder="Seu nome" required>
@@ -206,7 +193,7 @@ def home():
     </html>
     """
 
-# AGENDAR 🔥 30 MIN
+# AGENDAR ⏱️
 @app.route("/agendar", methods=["POST"])
 def agendar():
     nome = request.form["nome"]
@@ -238,7 +225,7 @@ def agendar():
 
     return redirect("/")
 
-# LOGIN
+# LOGIN 🔐
 @app.route("/login", methods=["GET","POST"])
 def login():
     if request.method == "POST":
@@ -247,17 +234,68 @@ def login():
             return redirect("/painel")
 
     return """
-    <body style="background:#111;color:white;text-align:center">
-    <h2>Login</h2>
+    <html>
+    <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+    body {
+        background:#0a0a0a;
+        color:white;
+        font-family:Segoe UI;
+        display:flex;
+        justify-content:center;
+        align-items:center;
+        height:100vh;
+    }
+
+    .box {
+        background:#1c1c1c;
+        padding:30px;
+        border-radius:15px;
+        width:300px;
+        text-align:center;
+    }
+
+    h2 { color:gold; }
+
+    input {
+        width:100%;
+        padding:12px;
+        margin-top:10px;
+        border-radius:10px;
+        border:none;
+        background:#222;
+        color:white;
+    }
+
+    button {
+        width:100%;
+        padding:12px;
+        margin-top:15px;
+        background:gold;
+        border:none;
+        border-radius:10px;
+        font-weight:bold;
+        cursor:pointer;
+    }
+    </style>
+    </head>
+
+    <body>
+    <div class="box">
+    <h2>🔐 Login</h2>
+
     <form method="POST">
-        <input name="user"><br>
-        <input type="password" name="senha"><br>
+        <input name="user" placeholder="Usuário">
+        <input type="password" name="senha" placeholder="Senha">
         <button>Entrar</button>
     </form>
+    </div>
     </body>
+    </html>
     """
 
-# PAINEL
+# PAINEL 📊
 @app.route("/painel")
 def painel():
     if not session.get("logado"):
