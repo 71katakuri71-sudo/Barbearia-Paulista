@@ -1,5 +1,6 @@
 from flask import Flask, request, redirect, session
 import sqlite3
+from datetime import datetime
 
 app = Flask(__name__)
 app.secret_key = "123"
@@ -7,49 +8,123 @@ app.secret_key = "123"
 USER = "admin"
 PASS = "123"
 
-def init_db():
-    conn = sqlite3.connect("agendamentos.db")
+def db():
+    return sqlite3.connect("agendamentos.db")
+
+def init():
+    conn = db()
     c = conn.cursor()
     c.execute("""
     CREATE TABLE IF NOT EXISTS agendamentos (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         nome TEXT,
         data TEXT,
-        horario TEXT,
+        hora TEXT,
+        servico TEXT,
         status TEXT
     )
     """)
     conn.commit()
     conn.close()
 
-init_db()
+init()
 
+# HOME 🔥 VISUAL TOP
 @app.route("/")
 def home():
     return """
     <html>
     <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Barbearia Paulista</title>
 
     <style>
-    body { margin:0; font-family:'Segoe UI'; background:#0d0d0d; color:white; }
-    .container { max-width:420px; margin:auto; padding:20px; }
-    h1 { text-align:center; color:gold; }
-
-    .card {
-        background:#1c1c1c;
-        padding:20px;
-        border-radius:20px;
-        margin-top:20px;
+    body {
+        margin:0;
+        font-family:Segoe UI;
+        background:#0a0a0a;
+        color:white;
     }
 
-    input {
+    .hero {
+        height:90vh;
+        background:
+        linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.9)),
+        url('https://images.unsplash.com/photo-1599351431202-1e0f0137899a') center/cover;
+        display:flex;
+        flex-direction:column;
+        justify-content:center;
+        align-items:center;
+        text-align:center;
+    }
+
+    .hero h1 {
+        font-size:42px;
+        color:gold;
+        text-shadow:2px 2px 15px black;
+    }
+
+    .hero p {
+        font-size:18px;
+        margin-bottom:20px;
+    }
+
+    .btn {
+        background:gold;
+        padding:15px 25px;
+        border-radius:10px;
+        text-decoration:none;
+        color:black;
+        font-weight:bold;
+        transition:0.3s;
+    }
+
+    .btn:hover {
+        background:#e6c200;
+    }
+
+    .container {
+        max-width:1000px;
+        margin:auto;
+        padding:20px;
+    }
+
+    .section {
+        margin-top:50px;
+    }
+
+    .servicos {
+        display:flex;
+        gap:20px;
+        flex-wrap:wrap;
+    }
+
+    .card {
+        flex:1;
+        min-width:250px;
+        background:#1c1c1c;
+        padding:25px;
+        border-radius:15px;
+        text-align:center;
+        transition:0.3s;
+    }
+
+    .card:hover {
+        transform:scale(1.05);
+        background:#262626;
+    }
+
+    .card h3 {
+        color:gold;
+    }
+
+    input, select {
         width:100%;
-        padding:14px;
+        padding:12px;
         margin-top:10px;
-        border-radius:12px;
+        border-radius:10px;
         border:none;
-        background:#2a2a2a;
+        background:#222;
         color:white;
     }
 
@@ -57,90 +132,113 @@ def home():
         width:100%;
         padding:14px;
         margin-top:15px;
-        border:none;
-        border-radius:12px;
         background:gold;
+        border:none;
+        border-radius:10px;
         font-weight:bold;
         cursor:pointer;
+        transition:0.3s;
     }
 
-    .servico {
-        display:flex;
-        justify-content:space-between;
-        padding:10px 0;
-        border-bottom:1px solid #333;
+    button:hover {
+        background:#e6c200;
     }
 
-    a { display:block; text-align:center; margin-top:20px; color:gold; }
-
-    .whatsapp {
-        position:fixed;
-        bottom:20px;
-        right:20px;
-        background:#25D366;
-        padding:15px;
-        border-radius:50%;
-        text-decoration:none;
-        color:white;
+    a {
+        color:gold;
+        text-align:center;
+        display:block;
+        margin-top:20px;
     }
-
     </style>
     </head>
 
     <body>
 
+    <div class="hero">
+        <h1>💈 Barbearia Paulista</h1>
+        <p>Estilo, qualidade e experiência premium</p>
+        <a href="#agendar" class="btn">Agendar Agora</a>
+    </div>
+
     <div class="container">
 
-    <h1>💈 Barbearia Paulista</h1>
+    <div class="section">
+        <h2 style="text-align:center;color:gold;">Serviços</h2>
 
-    <div class="card">
-        <h3>Agendar</h3>
+        <div class="servicos">
+            <div class="card"><h3>Corte</h3><p>R$30</p></div>
+            <div class="card"><h3>Barba</h3><p>R$20</p></div>
+            <div class="card"><h3>Completo</h3><p>R$45</p></div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2 style="text-align:center;color:gold;">Sobre</h2>
+        <p style="text-align:center;">
+        Ambiente moderno com estilo clássico, atendimento de qualidade e experiência única.
+        </p>
+    </div>
+
+    <div class="section" id="agendar">
+        <h2 style="text-align:center;color:gold;">Agendar Horário</h2>
+
         <form action="/agendar" method="POST">
-            <input name="nome" placeholder="Nome" required>
+            <input name="nome" placeholder="Seu nome" required>
             <input type="date" name="data" required>
-            <input type="time" name="horario" required>
-            <button>Agendar</button>
+            <input type="time" name="hora" required>
+
+            <select name="servico">
+                <option>Corte</option>
+                <option>Barba</option>
+                <option>Completo</option>
+            </select>
+
+            <button>Confirmar</button>
         </form>
     </div>
 
-    <div class="card">
-        <h3>Serviços</h3>
-        <div class="servico"><span>Corte</span><span>R$30</span></div>
-        <div class="servico"><span>Barba</span><span>R$20</span></div>
-        <div class="servico"><span>Completo</span><span>R$45</span></div>
-    </div>
-
-    <a href="/login">🔐 Área do barbeiro</a>
+    <a href="/login">🔐 Painel Administrativo</a>
 
     </div>
-
-    <a class="whatsapp" href="#">💬</a>
 
     </body>
     </html>
     """
 
+# AGENDAR 🔥 30 MIN
 @app.route("/agendar", methods=["POST"])
 def agendar():
     nome = request.form["nome"]
     data = request.form["data"]
-    horario = request.form["horario"]
+    hora = request.form["hora"]
+    servico = request.form["servico"]
 
-    conn = sqlite3.connect("agendamentos.db")
+    conn = db()
     c = conn.cursor()
 
-    c.execute("SELECT * FROM agendamentos WHERE data=? AND horario=?", (data, horario))
-    if c.fetchone():
-        return "<h2>Horário ocupado</h2><a href='/'>Voltar</a>"
+    c.execute("SELECT hora FROM agendamentos WHERE data=?", (data,))
+    horarios = c.fetchall()
 
-    c.execute("INSERT INTO agendamentos (nome,data,horario,status) VALUES (?,?,?,?)",
-              (nome, data, horario, "Agendado"))
+    hora_nova = datetime.strptime(hora, "%H:%M")
+
+    for h in horarios:
+        hora_existente = datetime.strptime(h[0], "%H:%M")
+        diferenca = abs((hora_nova - hora_existente).total_seconds() / 60)
+
+        if diferenca < 30:
+            conn.close()
+            return "<h2>Horário muito próximo (mínimo 30min)</h2><a href='/'>Voltar</a>"
+
+    c.execute("INSERT INTO agendamentos (nome,data,hora,servico,status) VALUES (?,?,?,?,?)",
+              (nome,data,hora,servico,"Agendado"))
 
     conn.commit()
     conn.close()
 
     return redirect("/")
 
+# LOGIN
 @app.route("/login", methods=["GET","POST"])
 def login():
     if request.method == "POST":
@@ -159,43 +257,42 @@ def login():
     </body>
     """
 
+# PAINEL
 @app.route("/painel")
 def painel():
     if not session.get("logado"):
         return redirect("/login")
 
-    conn = sqlite3.connect("agendamentos.db")
+    conn = db()
     c = conn.cursor()
-    c.execute("SELECT * FROM agendamentos")
-    dados = c.fetchall()
+    dados = c.execute("SELECT * FROM agendamentos").fetchall()
+    conn.close()
 
     total = len(dados)
     faturamento = total * 30
 
-    conn.close()
-
     linhas = ""
-    for ag in dados:
+    for d in dados:
         linhas += f"""
         <tr>
-        <td>{ag[1]}</td>
-        <td>{ag[2]}</td>
-        <td>{ag[3]}</td>
-        <td>{ag[4]}</td>
-        <td>
-            <a href='/finalizar/{ag[0]}'>✔</a>
-            <a href='/excluir/{ag[0]}'>❌</a>
-        </td>
+            <td>{d[1]}</td>
+            <td>{d[2]}</td>
+            <td>{d[3]}</td>
+            <td>{d[4]}</td>
+            <td>{d[5]}</td>
+            <td>
+                <a href='/finalizar/{d[0]}'>✔</a>
+                <a href='/excluir/{d[0]}'>❌</a>
+            </td>
         </tr>
         """
 
     return f"""
     <html>
     <head>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-    body {{ background:#0d0d0d; color:white; font-family:'Segoe UI'; }}
+    body {{ background:#0d0d0d; color:white; font-family:Segoe UI; }}
     .container {{ max-width:700px; margin:auto; padding:20px; }}
     h1 {{ text-align:center; color:gold; }}
 
@@ -221,25 +318,22 @@ def painel():
     td, th {{ padding:10px; text-align:center; }}
 
     tr:nth-child(even) {{ background:#1a1a1a; }}
-
     </style>
     </head>
 
     <body>
     <div class="container">
 
-    <h1>Painel</h1>
+    <h1>📊 Dashboard</h1>
 
     <div class="stats">
         <div class="box">Clientes: {total}</div>
         <div class="box">R$: {faturamento}</div>
     </div>
 
-    <canvas id="grafico"></canvas>
-
     <table>
     <tr>
-    <th>Nome</th><th>Data</th><th>Hora</th><th>Status</th><th>Ação</th>
+    <th>Nome</th><th>Data</th><th>Hora</th><th>Serviço</th><th>Status</th><th>Ação</th>
     </tr>
     {linhas}
     </table>
@@ -247,27 +341,13 @@ def painel():
     <br><a href="/logout">Sair</a>
 
     </div>
-
-    <script>
-    new Chart(document.getElementById('grafico'), {{
-        type: 'bar',
-        data: {{
-            labels: ['Clientes'],
-            datasets: [{{
-                label: 'Total',
-                data: [{total}]
-            }}]
-        }}
-    }});
-    </script>
-
     </body>
     </html>
     """
 
 @app.route("/finalizar/<int:id>")
 def finalizar(id):
-    conn = sqlite3.connect("agendamentos.db")
+    conn = db()
     c = conn.cursor()
     c.execute("UPDATE agendamentos SET status='Finalizado' WHERE id=?", (id,))
     conn.commit()
@@ -276,7 +356,7 @@ def finalizar(id):
 
 @app.route("/excluir/<int:id>")
 def excluir(id):
-    conn = sqlite3.connect("agendamentos.db")
+    conn = db()
     c = conn.cursor()
     c.execute("DELETE FROM agendamentos WHERE id=?", (id,))
     conn.commit()
